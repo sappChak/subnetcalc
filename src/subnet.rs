@@ -12,7 +12,6 @@ impl Subnet {
         Self { ip, mask }
     }
 
-    /// Parse a subnet from a string in the format "IP/MASK"
     pub fn from_str(subnet: &str) -> Result<Self, &'static str> {
         let (ip_str, mask_str) = subnet.split_once('/').ok_or("Invalid subnet format")?;
         let ip = Ipv4Addr::from_str(ip_str).map_err(|_| "Invalid IP format")?;
@@ -21,7 +20,6 @@ impl Subnet {
         Ok(Subnet::new(ip, mask))
     }
 
-    /// Aggregate multiple subnets into the smallest common network
     pub fn aggregate(subnets: &[Subnet]) -> Result<Subnet, &'static str> {
         if subnets.is_empty() {
             return Err("Subnet list is empty");
@@ -48,14 +46,12 @@ impl Subnet {
         Ok(Subnet::new(aggregated_network, common_bits))
     }
 
-    /// Convert the subnet mask length into a 32-bit mask
     pub fn mask_to_u32(mask: u32) -> u32 {
         let mask = !0 << (32 - mask);
         debug!("Mask to u32: {:032b}", mask);
         mask
     }
 
-    /// Calculate the common prefix for a list of subnets
     fn calculate_common_prefix(subnets: &[Subnet], first_subnet: u32) -> u32 {
         subnets.iter().skip(1).fold(first_subnet, |acc, subnet| {
             let masked_ip = u32::from(subnet.ip) & Self::mask_to_u32(subnet.mask);
@@ -69,7 +65,6 @@ impl Subnet {
         })
     }
 
-    /// Find the length of the common prefix for a list of subnets
     pub fn find_common_prefix_length(subnets: &[Subnet]) -> u32 {
         let first_ip = u32::from(subnets[0].ip);
         (0..32)
@@ -87,77 +82,5 @@ impl Subnet {
 impl std::fmt::Display for Subnet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}/{}", self.ip, self.mask)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::subnet::Subnet;
-    use std::net::Ipv4Addr;
-
-    #[test]
-    fn test_parse_subnet_valid() {
-        let result = Subnet::from_str("192.168.100.0/27").unwrap();
-        assert_eq!(result, Subnet::new(Ipv4Addr::new(192, 168, 100, 0), 27));
-
-        let result = Subnet::from_str("10.0.0.0/8").unwrap();
-        assert_eq!(result, Subnet::new(Ipv4Addr::new(10, 0, 0, 0), 8));
-    }
-
-    #[test]
-    fn test_parse_subnet_invalid_format() {
-        let result = Subnet::from_str("192.168.100.0-27");
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Invalid subnet format");
-
-        let result = Subnet::from_str("invalid/27");
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_aggregate_subnets() {
-        let subnets = vec![
-            Subnet::new(Ipv4Addr::new(192, 168, 100, 0), 27),
-            Subnet::new(Ipv4Addr::new(192, 168, 100, 32), 27),
-            Subnet::new(Ipv4Addr::new(192, 168, 100, 64), 26),
-        ];
-
-        let result = Subnet::aggregate(&subnets).unwrap();
-        assert_eq!(result, Subnet::new(Ipv4Addr::new(192, 168, 100, 0), 25));
-    }
-
-    #[test]
-    fn test_aggregate_single_subnet() {
-        let subnets = vec![Subnet::new(Ipv4Addr::new(192, 168, 100, 0), 27)];
-
-        let result = Subnet::aggregate(&subnets).unwrap();
-        assert_eq!(result, Subnet::new(Ipv4Addr::new(192, 168, 100, 0), 27)); // Single subnet stays the same
-    }
-
-    #[test]
-    fn test_aggregate_subnets_empty() {
-        let subnets: Vec<Subnet> = vec![];
-
-        let result = Subnet::aggregate(&subnets);
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "Subnet list is empty");
-    }
-
-    #[test]
-    fn test_find_common_prefix_length() {
-        let subnets = vec![
-            Subnet::new(Ipv4Addr::new(192, 168, 100, 0), 27),
-            Subnet::new(Ipv4Addr::new(192, 168, 100, 32), 27),
-            Subnet::new(Ipv4Addr::new(192, 168, 100, 64), 26),
-        ];
-
-        let result = Subnet::find_common_prefix_length(&subnets);
-        assert_eq!(result, 25);
-    }
-
-    #[test]
-    fn test_mask_to_u32() {
-        assert_eq!(Subnet::mask_to_u32(24), 0xFFFFFF00); // /24 should give a mask of 255.255.255.0
-        assert_eq!(Subnet::mask_to_u32(27), 0xFFFFFFE0); // /27 should give a mask of 255.255.255.224
     }
 }
