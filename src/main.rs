@@ -1,10 +1,9 @@
 use clap::Parser;
 use log::{error, info};
-use std::{env, net::Ipv4Addr};
+use std::env;
 use subnetcalc::{
-    aggregate_subnets,
     cli::{Cli, Commands},
-    parse_subnet,
+    subnet::Subnet,
 };
 
 fn main() {
@@ -14,16 +13,19 @@ fn main() {
 
     match &cli.command {
         Commands::Aggregate { subnets } => {
-            let parsed_subnets: Result<Vec<(Ipv4Addr, u32)>, _> =
-                subnets.iter().map(|s| parse_subnet(s)).collect();
+            let parsed_subnets: Result<Vec<Subnet>, _> =
+                subnets.iter().map(|s| Subnet::from_str(s)).collect();
 
             match parsed_subnets {
-                Ok(subnets) => match aggregate_subnets(&subnets) {
-                    Ok((ip, mask)) => info!("Aggregated subnet: {}/{}", ip, mask),
+                Ok(subnets) => match Subnet::aggregate(&subnets) {
+                    Ok(aggregated_subnet) => info!("Aggregated subnet: {}", aggregated_subnet),
                     Err(e) => error!("Error: {}", e),
                 },
                 Err(e) => error!("Invalid subnet format: {}", e),
             }
+        }
+        Commands::Info { subnet } => {
+            todo!();
         }
     }
 }

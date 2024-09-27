@@ -14,4 +14,8 @@ pub enum Commands {
         #[arg(required = true)]
         subnets: Vec<String>,
     },
+    Info {
+        #[arg(required = true)]
+        subnet: String,
+    },
 }
