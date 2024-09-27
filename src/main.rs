@@ -1,5 +1,6 @@
 use clap::Parser;
-use std::net::Ipv4Addr;
+use log::{error, info};
+use std::{env, net::Ipv4Addr};
 use subnetcalc::{
     aggregate_subnets,
     cli::{Cli, Commands},
@@ -7,17 +8,21 @@ use subnetcalc::{
 };
 
 fn main() {
+    env::set_var("RUST_LOG", "debug");
+    env_logger::init();
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Aggregate { subnets } => {
-            let parsed_subnets: Vec<(Ipv4Addr, u32)> = subnets
-                .iter()
-                .map(|s| parse_subnet(s).expect("Invalid subnet format"))
-                .collect();
-            match aggregate_subnets(&parsed_subnets) {
-                Ok((ip, mask)) => println!("Aggregated subnet: {}/{}", ip, mask),
-                Err(e) => eprintln!("Error: {}", e),
+            let parsed_subnets: Result<Vec<(Ipv4Addr, u32)>, _> =
+                subnets.iter().map(|s| parse_subnet(s)).collect();
+
+            match parsed_subnets {
+                Ok(subnets) => match aggregate_subnets(&subnets) {
+                    Ok((ip, mask)) => info!("Aggregated subnet: {}/{}", ip, mask),
+                    Err(e) => error!("Error: {}", e),
+                },
+                Err(e) => error!("Invalid subnet format: {}", e),
             }
         }
     }
