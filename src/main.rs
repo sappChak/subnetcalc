@@ -25,7 +25,16 @@ fn main() {
             }
         }
         Commands::Info { subnet } => {
-            todo!();
+            let parsed_subnet = Subnet::from_str(subnet);
+            match parsed_subnet {
+                Ok(subnet) => {
+                    info!("Subnet: {}", subnet);
+                    info!("Netmask: {}", subnet.netmask());
+                    info!("Wildcard: {}", subnet.wildcard());
+                    info!("Broadcast: {}", subnet.broadcast());
+                }
+                Err(e) => error!("Invalid subnet format: {}", e),
+            }
         }
     }
 }
