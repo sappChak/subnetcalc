@@ -3,10 +3,9 @@ use std::{net::Ipv4Addr, str::FromStr};
 
 #[derive(Parser)]
 pub struct Cli {
-    pub subnets: Vec<String>, // A list of subnets
+    pub subnets: Vec<String>,
 }
 
-// Parses a subnet string into an (Ipv4Addr, u32) tuple
 pub fn parse_subnet(subnet: &str) -> Result<(Ipv4Addr, u32), &'static str> {
     let parts: Vec<&str> = subnet.split('/').collect();
     if parts.len() != 2 {
@@ -17,17 +16,14 @@ pub fn parse_subnet(subnet: &str) -> Result<(Ipv4Addr, u32), &'static str> {
     Ok((ip, mask))
 }
 
-// Aggregates a list of subnets into a common network address and prefix length
 pub fn aggregate_subnets(subnets: &[(Ipv4Addr, u32)]) -> Result<(Ipv4Addr, u32), &'static str> {
     if subnets.is_empty() {
         return Err("Subnet list is empty");
     }
 
-    // Convert the first subnet IP to u32
     let first_subnet = ip_to_u32(subnets[0].0) & mask_to_u32(subnets[0].1);
     println!("First subnet: {:032b}", first_subnet);
 
-    // Calculate the common prefix across all subnets
     let common_prefix = subnets
         .iter()
         .skip(1)
@@ -38,7 +34,6 @@ pub fn aggregate_subnets(subnets: &[(Ipv4Addr, u32)]) -> Result<(Ipv4Addr, u32),
         });
     println!("Common prefix: {:032b}", common_prefix);
 
-    // Calculate the number of common prefix bits
     let common_bits = find_common_prefix_length(subnets);
     println!("Common bits: {}", common_bits);
 
@@ -48,17 +43,14 @@ pub fn aggregate_subnets(subnets: &[(Ipv4Addr, u32)]) -> Result<(Ipv4Addr, u32),
     Ok((aggregated_network, common_bits))
 }
 
-// Converts an IPv4 address to a u32
 fn ip_to_u32(ip: Ipv4Addr) -> u32 {
     u32::from(ip)
 }
 
-// Converts a mask length to a u32
 fn mask_to_u32(mask: u32) -> u32 {
     (!0 << (32 - mask)) & 0xFFFFFFFF
 }
 
-// Finds the number of common prefix bits across all subnets
 fn find_common_prefix_length(subnets: &[(Ipv4Addr, u32)]) -> u32 {
     let mut prefix_len = 0;
     let first_ip = ip_to_u32(subnets[0].0);
@@ -110,7 +102,7 @@ mod tests {
         ];
 
         let result = aggregate_subnets(&subnets).unwrap();
-        assert_eq!(result, (Ipv4Addr::new(192, 168, 100, 0), 25)); // Expect aggregation to /25
+        assert_eq!(result, (Ipv4Addr::new(192, 168, 100, 0), 25));
     }
 
     #[test]
@@ -139,7 +131,7 @@ mod tests {
         ];
 
         let result = find_common_prefix_length(&subnets);
-        assert_eq!(result, 25); // Common prefix length is 25
+        assert_eq!(result, 25);
     }
 
     #[test]
