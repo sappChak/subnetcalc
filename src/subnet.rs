@@ -64,10 +64,9 @@ impl Subnet {
         }
 
         let first_subnet = u32::from(subnets[0].ip) & Self::mask_to_u32(subnets[0].mask);
-
         let common_prefix = Self::calculate_common_prefix(subnets, first_subnet);
-
         let common_bits = Self::find_common_prefix_length(subnets);
+
         info!("Common prefix length: {}", common_bits);
 
         let aggregated_network = Ipv4Addr::from(common_prefix & (!0 << (32 - common_bits)));

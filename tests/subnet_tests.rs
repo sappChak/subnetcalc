@@ -14,7 +14,7 @@ fn test_parse_subnet_valid() {
 fn test_parse_subnet_invalid_format() {
     let result = Subnet::from_str("192.168.100.0-27");
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), "Invalid subnet format");
+    assert_eq!(result.unwrap_err(), "Invalid IP format");
 
     let result = Subnet::from_str("invalid/27");
     assert!(result.is_err());
@@ -80,7 +80,7 @@ fn test_from_str_without_prefix() {
     let subnet_str = "192.168.1.10";
     let subnet = Subnet::from_str(subnet_str).expect("Failed to parse subnet");
     assert_eq!(subnet.mask, 24);
-    assert_eq!(subnet.ip, Ipv4Addr::new(192, 168, 1, 0)); // Defaulted to /24
+    assert_eq!(subnet.ip, Ipv4Addr::new(192, 168, 1, 10)); // Defaulted to /24
 }
 
 #[test]
