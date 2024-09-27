@@ -11,6 +11,7 @@ pub fn parse_subnet(subnet: &str) -> Result<(Ipv4Addr, u32), &'static str> {
         Some(parts) => parts,
         None => return Err("Invalid subnet format"),
     };
+
     let ip = Ipv4Addr::from_str(ip_str).map_err(|_| "Invalid IP format")?;
     let mask = mask_str.parse::<u32>().map_err(|_| "Invalid mask format")?;
 
@@ -18,25 +19,17 @@ pub fn parse_subnet(subnet: &str) -> Result<(Ipv4Addr, u32), &'static str> {
 }
 
 pub fn aggregate_subnets(subnets: &[(Ipv4Addr, u32)]) -> Result<(Ipv4Addr, u32), &'static str> {
-    if subnets.is_empty() {
-        return Err("Subnet list is empty");
+    match subnets {
+        [] => Err("Subnet list is empty"),
+        [single_subnet] => Ok(*single_subnet),
+        _ => {
+            let first_subnet = u32::from(subnets[0].0) & mask_to_u32(subnets[0].1);
+            let common_prefix = calculate_common_prefix(subnets, first_subnet);
+            let common_bits = find_common_prefix_length(subnets);
+            let aggregated_network = Ipv4Addr::from(common_prefix & (!0 << (32 - common_bits)));
+            Ok((aggregated_network, common_bits))
+        }
     }
-
-    let first_subnet = ip_to_u32(subnets[0].0) & mask_to_u32(subnets[0].1);
-    let common_prefix = calculate_common_prefix(subnets, first_subnet);
-    let common_bits = find_common_prefix_length(subnets);
-
-    let aggregated_network = Ipv4Addr::from(common_prefix & (!0 << (32 - common_bits)));
-
-    Ok((aggregated_network, common_bits))
-}
-
-fn ip_to_u32(ip: Ipv4Addr) -> u32 {
-    u32::from(ip)
-}
-
-fn mask_to_u32(mask: u32) -> u32 {
-    (!0 << (32 - mask)) & 0xFFFFFFFF
 }
 
 fn calculate_common_prefix(subnets: &[(Ipv4Addr, u32)], first_subnet: u32) -> u32 {
@@ -44,21 +37,25 @@ fn calculate_common_prefix(subnets: &[(Ipv4Addr, u32)], first_subnet: u32) -> u3
         .iter()
         .skip(1)
         .fold(first_subnet, |acc, &(ip, mask)| {
-            acc & (ip_to_u32(ip) & mask_to_u32(mask))
+            acc & (u32::from(ip) & mask_to_u32(mask))
         })
 }
 
 fn find_common_prefix_length(subnets: &[(Ipv4Addr, u32)]) -> u32 {
-    let first_ip = ip_to_u32(subnets[0].0);
+    let first_ip = u32::from(subnets[0].0);
     (0..32)
         .rev()
         .take_while(|&i| {
             let mask = 1 << i;
             subnets
                 .iter()
-                .all(|&(ip, _)| (first_ip & mask) == (ip_to_u32(ip) & mask))
+                .all(|&(ip, _)| (first_ip & mask) == (u32::from(ip) & mask))
         })
         .count() as u32
+}
+
+fn mask_to_u32(mask: u32) -> u32 {
+    (!0 << (32 - mask)) & 0xFFFFFFFF
 }
 
 #[cfg(test)]
@@ -123,12 +120,6 @@ mod tests {
 
         let result = find_common_prefix_length(&subnets);
         assert_eq!(result, 25);
-    }
-
-    #[test]
-    fn test_ip_to_u32() {
-        let ip = Ipv4Addr::new(192, 168, 100, 0);
-        assert_eq!(ip_to_u32(ip), 0xC0A86400); // 192.168.100.0 in u32
     }
 
     #[test]
