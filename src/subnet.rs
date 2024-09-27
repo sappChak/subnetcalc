@@ -1,4 +1,4 @@
-use log::{debug, info};
+use log::info;
 use std::{net::Ipv4Addr, str::FromStr};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -26,6 +26,7 @@ impl Subnet {
         Ipv4Addr::from(!Self::mask_to_u32(self.mask))
     }
 
+    /// Returns the default mask based on classful addressing
     pub fn default_mask(ip: Ipv4Addr) -> u32 {
         let octets = ip.octets();
         match octets[0] {
@@ -37,20 +38,17 @@ impl Subnet {
     }
 
     pub fn from_str(subnet: &str) -> Result<Self, &'static str> {
-        match subnet.split_once('/') {
-            Some((ip_str, mask_str)) => {
-                let ip = Ipv4Addr::from_str(ip_str).map_err(|_| "Invalid IP format")?;
-                let mask = mask_str.parse::<u32>().map_err(|_| "Invalid mask format")?;
-                info!("Parsed subnet: IP = {}, Mask = {}", ip, mask);
-                Ok(Subnet::new(ip, mask))
-            }
-            None => {
-                // No prefix provided, assume default based on classful addressing
-                let ip = Ipv4Addr::from_str(subnet).map_err(|_| "Invalid IP format")?;
-                let mask = Self::default_mask(ip);
-                info!("No prefix provided, assuming default mask based on class. Parsed IP = {}, Mask = {}", ip, mask);
-                Ok(Subnet::new(ip, mask))
-            }
+        if let Some((ip_str, mask_str)) = subnet.split_once('/') {
+            let ip = Ipv4Addr::from_str(ip_str).map_err(|_| "Invalid IP format")?;
+            let mask = mask_str.parse::<u32>().map_err(|_| "Invalid mask format")?;
+            info!("Parsed subnet: IP = {}, Mask = {}", ip, mask);
+            Ok(Subnet::new(ip, mask))
+        } else {
+            // No prefix provided, assume default based on classful addressing
+            let ip = Ipv4Addr::from_str(subnet).map_err(|_| "Invalid IP format")?;
+            let mask = Self::default_mask(ip);
+            info!("No prefix provided, assuming default mask based on class. Parsed IP = {}, Mask = {}", ip, mask);
+            Ok(Subnet::new(ip, mask))
         }
     }
 
@@ -84,12 +82,6 @@ impl Subnet {
     fn calculate_common_prefix(subnets: &[Subnet], first_subnet: u32) -> u32 {
         subnets.iter().skip(1).fold(first_subnet, |acc, subnet| {
             let masked_ip = u32::from(subnet.ip) & Self::mask_to_u32(subnet.mask);
-            debug!(
-                "Current IP: {:032b}, Masked IP: {:032b}, Acc: {:032b}",
-                u32::from(subnet.ip),
-                masked_ip,
-                acc
-            );
             acc & masked_ip
         })
     }
