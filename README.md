@@ -1,4 +1,4 @@
-# Subnet Calculator
+# Subnet Analyzer
 
 This Rust application calculates various subnet-related information, similar to the functionality provided by `ipcalc`. It can aggregate a list of subnets into a common network address and prefix length, and will include additional features for subnet calculations.
 
