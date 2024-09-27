@@ -1,1 +1,46 @@
+# Ignore the target directory
 /target
+
+# Ignore build artifacts
+**/*.rs.bk
+**/*.rs.swp
+**/*.rs.swo
+
+# Ignore the output of `cargo doc`
+/doc
+
+# Ignore the output of `cargo test`
+/*.log
+
+# Ignore the output of `cargo bench`
+/*.dat
+
+# Ignore the output of `cargo build`
+/*.rlib
+
+# Ignore the output of `cargo run`
+/*.dSYM
+
+# Ignore the output of `cargo install`
+/*.crate
+
+# Ignore the output of `cargo package`
+/*.tar.gz
+
+# Ignore the output of `cargo publish`
+/*.asc
+
+# Ignore the output of `cargo verify`
+/*.sig
+
+# Ignore the output of `cargo vendor`
+/vendor
+
+# Ignore IDE and editor specific files
+/.idea
+/.vscode
+*.iml
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
