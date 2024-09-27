@@ -22,7 +22,7 @@ This Rust application calculates various subnet-related information, similar to 
 To run the application, use the following command:
 
 ```sh
-cargo run -- "192.168.100.0/27" "192.168.100.32/27" "192.168.100.64/26"
+cargo run aggregate "192.168.100.0/27" "192.168.100.32/27" "192.168.100.64/26"
 ```
 
 ### Example Output
