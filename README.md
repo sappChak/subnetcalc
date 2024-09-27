@@ -19,11 +19,19 @@ This Rust application calculates various subnet-related information, similar to 
 
 ### Running the Application
 
-To run the application, use the following command:
+To aggregate IPs, use the following command:
 
 ```sh
 cargo run aggregate "192.168.100.0/27" "192.168.100.32/27" "192.168.100.64/26"
 ```
+
+To check subnet information such as broadcast and wildcard addresses, use:
+
+```sh
+cargo run info "192.168.100.0/27"
+```
+
+Note: If a prefix is not provided, the default based on the IP class will be applied.
 
 ### Example Output
 
