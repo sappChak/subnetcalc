@@ -7,12 +7,13 @@ pub struct Cli {
 }
 
 pub fn parse_subnet(subnet: &str) -> Result<(Ipv4Addr, u32), &'static str> {
-    let parts: Vec<&str> = subnet.split('/').collect();
-    if parts.len() != 2 {
-        return Err("Invalid subnet format");
-    }
-    let ip = Ipv4Addr::from_str(parts[0]).expect("Invalid IP format");
-    let mask = parts[1].parse::<u32>().expect("Invalid mask format");
+    let (ip_str, mask_str) = match subnet.split_once('/') {
+        Some(parts) => parts,
+        None => return Err("Invalid subnet format"),
+    };
+    let ip = Ipv4Addr::from_str(ip_str).map_err(|_| "Invalid IP format")?;
+    let mask = mask_str.parse::<u32>().map_err(|_| "Invalid mask format")?;
+
     Ok((ip, mask))
 }
 
@@ -22,23 +23,10 @@ pub fn aggregate_subnets(subnets: &[(Ipv4Addr, u32)]) -> Result<(Ipv4Addr, u32),
     }
 
     let first_subnet = ip_to_u32(subnets[0].0) & mask_to_u32(subnets[0].1);
-    println!("First subnet: {:032b}", first_subnet);
-
-    let common_prefix = subnets
-        .iter()
-        .skip(1)
-        .fold(first_subnet, |acc, &(ip, mask)| {
-            let ip_u32 = ip_to_u32(ip) & mask_to_u32(mask);
-            println!("Current IP: {:032b}", ip_u32);
-            acc & ip_u32
-        });
-    println!("Common prefix: {:032b}", common_prefix);
-
+    let common_prefix = calculate_common_prefix(subnets, first_subnet);
     let common_bits = find_common_prefix_length(subnets);
-    println!("Common bits: {}", common_bits);
 
     let aggregated_network = Ipv4Addr::from(common_prefix & (!0 << (32 - common_bits)));
-    println!("Aggregated network: {}", aggregated_network);
 
     Ok((aggregated_network, common_bits))
 }
@@ -51,23 +39,26 @@ fn mask_to_u32(mask: u32) -> u32 {
     (!0 << (32 - mask)) & 0xFFFFFFFF
 }
 
+fn calculate_common_prefix(subnets: &[(Ipv4Addr, u32)], first_subnet: u32) -> u32 {
+    subnets
+        .iter()
+        .skip(1)
+        .fold(first_subnet, |acc, &(ip, mask)| {
+            acc & (ip_to_u32(ip) & mask_to_u32(mask))
+        })
+}
+
 fn find_common_prefix_length(subnets: &[(Ipv4Addr, u32)]) -> u32 {
-    let mut prefix_len = 0;
     let first_ip = ip_to_u32(subnets[0].0);
-
-    for i in (0..32).rev() {
-        let mask = 1 << i;
-        if subnets
-            .iter()
-            .all(|&(ip, _)| (first_ip & mask) == (ip_to_u32(ip) & mask))
-        {
-            prefix_len += 1;
-        } else {
-            break;
-        }
-    }
-
-    prefix_len
+    (0..32)
+        .rev()
+        .take_while(|&i| {
+            let mask = 1 << i;
+            subnets
+                .iter()
+                .all(|&(ip, _)| (first_ip & mask) == (ip_to_u32(ip) & mask))
+        })
+        .count() as u32
 }
 
 #[cfg(test)]
