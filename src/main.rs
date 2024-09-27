@@ -1,40 +1,33 @@
 use clap::Parser;
-use log::{error, info};
-use std::env;
+use log::error;
 use subnetcalc::{
     cli::{Cli, Commands},
     subnet::Subnet,
 };
 
-fn main() {
-    env::set_var("RUST_LOG", "debug");
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Aggregate { subnets } => {
-            let parsed_subnets: Result<Vec<Subnet>, _> =
-                subnets.iter().map(|s| Subnet::from_str(s)).collect();
-
-            match parsed_subnets {
-                Ok(subnets) => match Subnet::aggregate(&subnets) {
-                    Ok(aggregated_subnet) => info!("Aggregated subnet: {}", aggregated_subnet),
-                    Err(e) => error!("Error: {}", e),
-                },
-                Err(e) => error!("Invalid subnet format: {}", e),
+            let parsed_subnets: Vec<Subnet> = subnets
+                .iter()
+                .map(|s| Subnet::from_str(s))
+                .collect::<Result<_, _>>()?;
+            match Subnet::aggregate(&parsed_subnets) {
+                Ok(aggregated_subnet) => println!("Aggregated subnet: {}", aggregated_subnet),
+                Err(e) => error!("Error: {}", e),
             }
         }
         Commands::Info { subnet } => {
-            let parsed_subnet = Subnet::from_str(subnet);
-            match parsed_subnet {
-                Ok(subnet) => {
-                    info!("Subnet: {}", subnet);
-                    info!("Netmask: {}", subnet.netmask());
-                    info!("Wildcard: {}", subnet.wildcard());
-                    info!("Broadcast: {}", subnet.broadcast());
-                }
-                Err(e) => error!("Invalid subnet format: {}", e),
-            }
+            let subnet = Subnet::from_str(subnet)?;
+            println!("Subnet: {}", subnet);
+            println!("Netmask: {}", subnet.netmask());
+            println!("Wildcard: {}", subnet.wildcard());
+            println!("Broadcast: {}", subnet.broadcast());
         }
     }
+
+    Ok(())
 }
