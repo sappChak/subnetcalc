@@ -29,6 +29,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Netmask: {}", subnet.netmask().to_string().purple());
             println!("Wildcard: {}", subnet.wildcard().to_string().purple());
             println!("Broadcast: {}", subnet.broadcast().to_string().purple());
+            println!("Hosts: {}", subnet.hosts().to_string().purple());
+            println!("Class type: {}", subnet.class().to_string());
         }
     }
 

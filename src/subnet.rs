@@ -26,10 +26,22 @@ impl Subnet {
         Ipv4Addr::from(!Self::mask_to_u32(self.mask))
     }
 
-    /// Returns the default mask based on classful addressing
+    pub fn class(&self) -> char {
+        match self.ip.octets()[0] {
+            0..=127 => 'A',
+            128..=191 => 'B',
+            192..=223 => 'C',
+            224..=239 => 'D',
+            240..=255 => 'E',
+        }
+    }
+
+    pub fn hosts(&self) -> u32 {
+        2u32.pow(32 - self.mask) - 2
+    }
+
     pub fn default_mask(ip: Ipv4Addr) -> u32 {
-        let octets = ip.octets();
-        match octets[0] {
+        match ip.octets()[0] {
             0..=127 => 8,    // Class A
             128..=191 => 16, // Class B
             192..=223 => 24, // Class C
