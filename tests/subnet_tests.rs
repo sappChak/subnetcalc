@@ -128,3 +128,45 @@ fn test_wildcard() {
     let subnet = Subnet::new(Ipv4Addr::new(192, 168, 1, 0), 24);
     assert_eq!(subnet.wildcard(), Ipv4Addr::new(0, 0, 0, 255));
 }
+
+#[test]
+fn test_class_a() {
+    let subnet = Subnet::new(Ipv4Addr::new(10, 0, 0, 1), 8);
+    assert_eq!(subnet.class(), 'A');
+}
+
+#[test]
+fn test_class_b() {
+    let subnet = Subnet::new(Ipv4Addr::new(172, 16, 0, 1), 16);
+    assert_eq!(subnet.class(), 'B');
+}
+
+#[test]
+fn test_class_c() {
+    let subnet = Subnet::new(Ipv4Addr::new(192, 168, 0, 1), 24);
+    assert_eq!(subnet.class(), 'C');
+}
+
+#[test]
+fn test_class_d() {
+    let subnet = Subnet::new(Ipv4Addr::new(224, 0, 0, 1), 4);
+    assert_eq!(subnet.class(), 'D');
+}
+
+#[test]
+fn test_class_e() {
+    let subnet = Subnet::new(Ipv4Addr::new(240, 0, 0, 1), 4);
+    assert_eq!(subnet.class(), 'E');
+}
+
+#[test]
+fn test_hosts() {
+    let subnet = Subnet::new(Ipv4Addr::new(192, 168, 1, 0), 24);
+    assert_eq!(subnet.hosts(), 254);
+
+    let subnet = Subnet::new(Ipv4Addr::new(10, 0, 0, 0), 8);
+    assert_eq!(subnet.hosts(), 16_777_214);
+
+    let subnet = Subnet::new(Ipv4Addr::new(172, 16, 0, 0), 16);
+    assert_eq!(subnet.hosts(), 65_534);
+}
