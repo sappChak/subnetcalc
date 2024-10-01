@@ -49,6 +49,26 @@ impl Subnet {
         Ok(Subnet::new(aggregated_network, common_bits))
     }
 
+    fn calculate_common_prefix(subnets: &[Subnet], first_subnet: u32) -> u32 {
+        subnets.iter().skip(1).fold(first_subnet, |acc, subnet| {
+            let masked_ip = u32::from(subnet.ip) & Self::mask_to_u32(subnet.mask);
+            acc & masked_ip
+        })
+    }
+
+    pub fn count_common_bits(subnets: &[Subnet]) -> u32 {
+        let first_ip = u32::from(subnets[0].ip);
+        (0..32)
+            .rev()
+            .take_while(|&i| {
+                let mask = 1 << i;
+                subnets
+                    .iter()
+                    .all(|subnet| (first_ip & mask) == (u32::from(subnet.ip) & mask))
+            })
+            .count() as u32
+    }
+
     pub fn broadcast(&self) -> Ipv4Addr {
         let ip_u32 = u32::from(self.ip);
         let wildcard = !Self::mask_to_u32(self.mask);
@@ -88,26 +108,6 @@ impl Subnet {
 
     pub fn mask_to_u32(mask: u32) -> u32 {
         !0 << (32 - mask)
-    }
-
-    fn calculate_common_prefix(subnets: &[Subnet], first_subnet: u32) -> u32 {
-        subnets.iter().skip(1).fold(first_subnet, |acc, subnet| {
-            let masked_ip = u32::from(subnet.ip) & Self::mask_to_u32(subnet.mask);
-            acc & masked_ip
-        })
-    }
-
-    pub fn count_common_bits(subnets: &[Subnet]) -> u32 {
-        let first_ip = u32::from(subnets[0].ip);
-        (0..32)
-            .rev()
-            .take_while(|&i| {
-                let mask = 1 << i;
-                subnets
-                    .iter()
-                    .all(|subnet| (first_ip & mask) == (u32::from(subnet.ip) & mask))
-            })
-            .count() as u32
     }
 }
 
