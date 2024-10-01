@@ -23,7 +23,10 @@ pub enum Command {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    env_logger::init();
+    env_logger::Builder::from_default_env()
+        .filter(None, log::LevelFilter::Info)
+        .init();
+
     let cli = Cli::parse();
 
     match &cli.command {
@@ -32,8 +35,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-fn handle_aggregate(subnets: &Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
-    let parsed_subnets: Vec<Subnet> = parse_subnets(subnets)?;
+fn handle_aggregate(subnets: &[String]) -> Result<(), Box<dyn std::error::Error>> {
+    let parsed_subnets = parse_subnets(subnets)?;
     match Subnet::aggregate(&parsed_subnets) {
         Ok(aggregated_subnet) => {
             println!(
@@ -48,13 +51,13 @@ fn handle_aggregate(subnets: &Vec<String>) -> Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
-fn handle_info(subnet: &String) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_info(subnet: &str) -> Result<(), Box<dyn std::error::Error>> {
     let subnet = Subnet::from_str(subnet)?;
     display_subnet_info(&subnet);
     Ok(())
 }
 
-fn parse_subnets(subnets: &Vec<String>) -> Result<Vec<Subnet>, Box<dyn std::error::Error>> {
+fn parse_subnets(subnets: &[String]) -> Result<Vec<Subnet>, Box<dyn std::error::Error>> {
     subnets
         .iter()
         .map(|s| Subnet::from_str(s))
