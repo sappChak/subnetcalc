@@ -57,7 +57,7 @@ fn test_find_common_prefix_length() {
         Subnet::new(Ipv4Addr::new(192, 168, 100, 64), 26),
     ];
 
-    let result = Subnet::find_common_prefix_length(&subnets);
+    let result = Subnet::count_common_bits(&subnets);
     assert_eq!(result, 25);
 }
 

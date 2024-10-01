@@ -12,6 +12,43 @@ impl Subnet {
         Self { ip, mask }
     }
 
+    pub fn from_str(subnet: &str) -> Result<Self, &'static str> {
+        if let Some((ip_str, mask_str)) = subnet.split_once('/') {
+            let ip = Ipv4Addr::from_str(ip_str).map_err(|_| "Invalid IP format")?;
+            let mask = mask_str.parse::<u32>().map_err(|_| "Invalid mask format")?;
+            info!("Parsed subnet: IP = {}, Mask = {}", ip, mask);
+            Ok(Subnet::new(ip, mask))
+        } else {
+            let ip = Ipv4Addr::from_str(subnet).map_err(|_| "Invalid IP format")?;
+            let mask = Self::default_mask(ip);
+            info!("No prefix provided, assuming default mask based on class. Parsed IP = {}, Mask = {}", ip, mask);
+            Ok(Subnet::new(ip, mask))
+        }
+    }
+
+    pub fn aggregate(subnets: &[Subnet]) -> Result<Subnet, &'static str> {
+        if subnets.is_empty() {
+            return Err("Subnet list is empty");
+        }
+        if subnets.len() == 1 {
+            info!("Single subnet provided: {:?}", subnets[0]);
+            return Ok(subnets[0]);
+        }
+
+        let first_subnet = u32::from(subnets[0].ip) & Self::mask_to_u32(subnets[0].mask);
+        let common_prefix = Self::calculate_common_prefix(subnets, first_subnet);
+        let common_bits = Self::count_common_bits(subnets);
+
+        info!("Common prefix length: {}", common_bits);
+
+        let aggregated_network = Ipv4Addr::from(common_prefix & (!0 << (32 - common_bits)));
+        info!(
+            "Aggregated network: IP = {}, Mask = {}",
+            aggregated_network, common_bits
+        );
+        Ok(Subnet::new(aggregated_network, common_bits))
+    }
+
     pub fn broadcast(&self) -> Ipv4Addr {
         let ip_u32 = u32::from(self.ip);
         let wildcard = !Self::mask_to_u32(self.mask);
@@ -49,44 +86,6 @@ impl Subnet {
         }
     }
 
-    pub fn from_str(subnet: &str) -> Result<Self, &'static str> {
-        if let Some((ip_str, mask_str)) = subnet.split_once('/') {
-            let ip = Ipv4Addr::from_str(ip_str).map_err(|_| "Invalid IP format")?;
-            let mask = mask_str.parse::<u32>().map_err(|_| "Invalid mask format")?;
-            info!("Parsed subnet: IP = {}, Mask = {}", ip, mask);
-            Ok(Subnet::new(ip, mask))
-        } else {
-            // No prefix provided, assume default based on classful addressing
-            let ip = Ipv4Addr::from_str(subnet).map_err(|_| "Invalid IP format")?;
-            let mask = Self::default_mask(ip);
-            info!("No prefix provided, assuming default mask based on class. Parsed IP = {}, Mask = {}", ip, mask);
-            Ok(Subnet::new(ip, mask))
-        }
-    }
-
-    pub fn aggregate(subnets: &[Subnet]) -> Result<Subnet, &'static str> {
-        if subnets.is_empty() {
-            return Err("Subnet list is empty");
-        }
-        if subnets.len() == 1 {
-            info!("Single subnet provided: {:?}", subnets[0]);
-            return Ok(subnets[0]);
-        }
-
-        let first_subnet = u32::from(subnets[0].ip) & Self::mask_to_u32(subnets[0].mask);
-        let common_prefix = Self::calculate_common_prefix(subnets, first_subnet);
-        let common_bits = Self::find_common_prefix_length(subnets);
-
-        info!("Common prefix length: {}", common_bits);
-
-        let aggregated_network = Ipv4Addr::from(common_prefix & (!0 << (32 - common_bits)));
-        info!(
-            "Aggregated network: IP = {}, Mask = {}",
-            aggregated_network, common_bits
-        );
-        Ok(Subnet::new(aggregated_network, common_bits))
-    }
-
     pub fn mask_to_u32(mask: u32) -> u32 {
         !0 << (32 - mask)
     }
@@ -98,7 +97,7 @@ impl Subnet {
         })
     }
 
-    pub fn find_common_prefix_length(subnets: &[Subnet]) -> u32 {
+    pub fn count_common_bits(subnets: &[Subnet]) -> u32 {
         let first_ip = u32::from(subnets[0].ip);
         (0..32)
             .rev()
