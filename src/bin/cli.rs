@@ -1,17 +1,34 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use colored::Colorize;
-use subnetcalc::{
-    cli::{Cli, Commands},
-    subnet::Subnet,
-};
+use subnetcalc::subnet::Subnet;
+
+#[derive(Parser)]
+#[command(name = "subnetcalc")]
+#[command(about = "A tool for subnet calculations", long_about = None)]
+pub struct Cli {
+    #[command(subcommand)]
+    pub command: Command,
+}
+
+#[derive(Subcommand)]
+pub enum Command {
+    Aggregate {
+        #[arg(required = true)]
+        subnets: Vec<String>,
+    },
+    Info {
+        #[arg(required = true)]
+        subnet: String,
+    },
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let cli = Cli::parse();
 
     match &cli.command {
-        Commands::Aggregate { subnets } => handle_aggregate(subnets),
-        Commands::Info { subnet } => handle_info(subnet),
+        Command::Aggregate { subnets } => handle_aggregate(subnets),
+        Command::Info { subnet } => handle_info(subnet),
     }
 }
 
