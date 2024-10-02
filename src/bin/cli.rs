@@ -27,7 +27,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .filter(None, log::LevelFilter::Info)
         .init();
 
-    let cli = Cli::parse();
+    #[cfg(debug_assertions)]
+    let args = vec![
+        "subnetcalc".to_string(),
+        "aggregate".to_string(),
+        "192.168.1.0/27".to_string(),
+        "192.168.1.32/27".to_string(),
+        "192.168.1.64/26".to_string(),
+    ];
+
+    #[cfg(not(debug_assertions))]
+    let args: Vec<String> = std::env::args().collect();
+
+    let cli = Cli::parse_from(args);
 
     match &cli.command {
         Command::Aggregate { subnets } => handle_aggregate(subnets),
