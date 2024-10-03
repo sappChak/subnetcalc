@@ -46,7 +46,8 @@ impl Subnet {
         let aggregated_network = Ipv4Addr::from(common_prefix & new_mask);
         info!(
             "Aggregated network: IP = {}, Mask = {}",
-            aggregated_network, common_bits
+            aggregated_network,
+            Ipv4Addr::from(new_mask.to_be_bytes())
         );
         Ok(Subnet::new(aggregated_network, common_bits))
     }
