@@ -40,7 +40,10 @@ impl Subnet {
         let common_bits = Self::count_common_bits(subnets);
         info!("Common prefix length: {}", common_bits);
 
-        let aggregated_network = Ipv4Addr::from(common_prefix & (!0 << (32 - common_bits)));
+        // Zero out the bits that are not common
+        let new_mask = !0 << (32 - common_bits);
+
+        let aggregated_network = Ipv4Addr::from(common_prefix & new_mask);
         info!(
             "Aggregated network: IP = {}, Mask = {}",
             aggregated_network, common_bits
@@ -48,7 +51,6 @@ impl Subnet {
         Ok(Subnet::new(aggregated_network, common_bits))
     }
 
-    // Perform bitwise AND operation on all subnets
     fn calculate_common_prefix(subnets: &[Subnet]) -> u32 {
         subnets
             .iter()
