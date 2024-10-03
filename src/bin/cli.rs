@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use colored::Colorize;
 use subnetcalc::subnet::Subnet;
+use log::info;
 
 #[derive(Parser)]
 #[command(name = "subnetcalc")]
@@ -51,9 +52,9 @@ fn handle_aggregate(subnets: &[String]) -> Result<(), Box<dyn std::error::Error>
     let parsed_subnets = parse_subnets(subnets)?;
     match Subnet::aggregate(&parsed_subnets) {
         Ok(aggregated_subnet) => {
-            println!(
+            info!(
                 "Aggregated subnet: {}",
-                aggregated_subnet.to_string().green()
+                aggregated_subnet.to_string().purple()
             );
         }
         Err(e) => {
@@ -78,10 +79,10 @@ fn parse_subnets(subnets: &[String]) -> Result<Vec<Subnet>, Box<dyn std::error::
 }
 
 fn display_subnet_info(subnet: &Subnet) {
-    println!("Subnet: {}", subnet.to_string().purple());
-    println!("Netmask: {}", subnet.netmask().to_string().purple());
-    println!("Wildcard: {}", subnet.wildcard().to_string().purple());
-    println!("Broadcast: {}", subnet.broadcast().to_string().purple());
-    println!("Hosts: {}", subnet.hosts().to_string().purple());
-    println!("Class type: {}", subnet.class().to_string());
+    info!("Subnet: {}", subnet.to_string().purple());
+    info!("Netmask: {}", subnet.netmask().to_string().purple());
+    info!("Wildcard: {}", subnet.wildcard().to_string().purple());
+    info!("Broadcast: {}", subnet.broadcast().to_string().purple());
+    info!("Hosts: {}", subnet.hosts().to_string().purple());
+    info!("Class type: {}", subnet.class().to_string());
 }
