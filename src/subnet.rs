@@ -1,10 +1,16 @@
 use log::info;
-use std::{net::Ipv4Addr, str::FromStr};
+use std::{fmt::Display, net::Ipv4Addr, str::FromStr};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Subnet {
     pub ip: Ipv4Addr,
     pub mask: u32,
+}
+
+impl Display for Subnet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}/{}", self.ip, self.mask)
+    }
 }
 
 impl Subnet {
@@ -40,7 +46,7 @@ impl Subnet {
         let common_bits = Self::count_common_bits(subnets);
         info!("Common prefix length: {}", common_bits);
 
-        // Zero out the bits that are not common
+        // 11111111.11111111.11111111.10000000
         let new_mask = !0 << (32 - common_bits);
 
         let aggregated_network = Ipv4Addr::from(common_prefix & new_mask);
@@ -111,11 +117,5 @@ impl Subnet {
 
     pub fn mask_to_u32(mask: u32) -> u32 {
         !0 << (32 - mask)
-    }
-}
-
-impl std::fmt::Display for Subnet {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}/{}", self.ip, self.mask)
     }
 }

@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use colored::Colorize;
-use subnetcalc::subnet::Subnet;
 use log::info;
+use subnetcalc::subnet::Subnet;
 
 #[derive(Parser)]
 #[command(name = "subnetcalc")]
