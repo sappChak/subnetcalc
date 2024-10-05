@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use colored::Colorize;
 use log::info;
+use std::str::FromStr;
 use subnetcalc::subnet::Subnet;
 
 #[derive(Parser)]

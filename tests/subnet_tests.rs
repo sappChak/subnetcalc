@@ -1,4 +1,5 @@
 use std::net::Ipv4Addr;
+use std::str::FromStr;
 use subnetcalc::subnet::Subnet;
 
 #[test]

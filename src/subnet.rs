@@ -13,12 +13,10 @@ impl std::fmt::Display for Subnet {
     }
 }
 
-impl Subnet {
-    pub fn new(ip: Ipv4Addr, mask: u32) -> Self {
-        Self { ip, mask }
-    }
+impl FromStr for Subnet {
+    type Err = &'static str;
 
-    pub fn from_str(subnet: &str) -> Result<Self, &'static str> {
+    fn from_str(subnet: &str) -> Result<Self, Self::Err> {
         if let Some((ip_str, mask_str)) = subnet.split_once('/') {
             let ip = Ipv4Addr::from_str(ip_str).map_err(|_| "Invalid IP format")?;
             let mask = mask_str.parse::<u32>().map_err(|_| "Invalid mask format")?;
@@ -30,6 +28,12 @@ impl Subnet {
             info!("No prefix provided, assuming default mask based on class. Parsed IP = {}, Mask = {}", ip, mask);
             Ok(Subnet::new(ip, mask))
         }
+    }
+}
+
+impl Subnet {
+    pub fn new(ip: Ipv4Addr, mask: u32) -> Self {
+        Self { ip, mask }
     }
 
     pub fn aggregate(subnets: &[Subnet]) -> Result<Subnet, &'static str> {
