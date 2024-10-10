@@ -29,12 +29,12 @@ pub enum Commands {
         // Network to calculate the mask for
         #[arg(required = true)]
         network: String,
+        /// Number of required networks
+        #[arg(required = true)]
+        subnets_number: u32,
         /// Number of required hosts
         #[arg(required = true)]
         hosts: u32,
-        /// Number of required networks
-        #[arg(required = true)]
-        networks_number: u32,
     },
 }
 
@@ -63,7 +63,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Mask {
             network,
             hosts,
-            networks_number: networks,
+            subnets_number: networks,
         } => handle_mask(network, *hosts, *networks),
     }
 }
@@ -97,7 +97,7 @@ fn handle_mask(
     required_networks: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let parsed_network = Network::from_str(network)?;
-    match Network::determine_subnet_mask(parsed_network.mask, required_hosts, required_networks) {
+    match Network::determine_subnet_mask(parsed_network.mask, required_networks, required_hosts) {
         Ok(mask) => {
             println!(
                 "{}: {}",
