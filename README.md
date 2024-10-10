@@ -18,9 +18,11 @@ To check subnet information, such as broadcast and wildcard addresses, use:
 cargo run --release info "192.168.100.0/27"
 ```
 
-To determine a new subnet mask based on NetID and the required number of hosts and subnets:
+To determine a new subnet mask based on NetID and the required number of subnets and hosts:
 
 ```sh
+# Command structure:
+# cargo run --release mask <NetID> <required_subnets> <required_hosts>
 cargo run --release mask 172.27.0.0/16 250 140
 ```
 
