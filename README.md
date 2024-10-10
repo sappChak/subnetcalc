@@ -12,14 +12,19 @@ To aggregate IPs, use the following command:
 cargo run aggregate "192.168.100.0/27" "192.168.100.32/27" "192.168.100.64/26"
 ```
 
-To check subnet information such as broadcast and wildcard addresses, use:
+To check subnet information, such as broadcast and wildcard addresses, use:
 
 ```sh
 cargo run info "192.168.100.0/27"
 ```
 
-Note: If a prefix is not provided, the default based on the IP class will be applied.
+To determine a new subnet mask based on NetID and the required number of hosts and subnets:
 
+```sh
+cargo run --release mask 172.27.0.0/16 250 140
+```
+
+Note: If a prefix is not provided, the default based on the IP class will be applied.
 ## Tests
 
 The application includes unit tests to verify the functionality of subnet parsing, aggregation, and utility functions. To run the tests, use the following command:
