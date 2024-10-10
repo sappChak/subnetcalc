@@ -9,13 +9,13 @@ This Rust application calculates various subnet-related information, similar to 
 To aggregate IPs, use the following command:
 
 ```sh
-cargo run aggregate "192.168.100.0/27" "192.168.100.32/27" "192.168.100.64/26"
+cargo run --release aggregate "192.168.100.0/27" "192.168.100.32/27" "192.168.100.64/26"
 ```
 
 To check subnet information, such as broadcast and wildcard addresses, use:
 
 ```sh
-cargo run info "192.168.100.0/27"
+cargo run --release info "192.168.100.0/27"
 ```
 
 To determine a new subnet mask based on NetID and the required number of hosts and subnets:
