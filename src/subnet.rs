@@ -1,5 +1,6 @@
 use log::info;
-use std::{net::Ipv4Addr, str::FromStr};
+use std::error::Error;
+use std::net::Ipv4Addr;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Network {
@@ -13,23 +14,50 @@ impl std::fmt::Display for Network {
     }
 }
 
-impl FromStr for Network {
-    type Err = &'static str;
+impl std::str::FromStr for Network {
+    type Err = NetworkError;
 
     fn from_str(subnet: &str) -> Result<Self, Self::Err> {
-        if let Some((ip_str, mask_str)) = subnet.split_once('/') {
-            let ip = Ipv4Addr::from_str(ip_str).map_err(|_| "Invalid IP format")?;
-            let mask = mask_str.parse::<u32>().map_err(|_| "Invalid mask format")?;
-            info!("Parsed network: IP = {}, Mask = {}", ip, mask);
-            Ok(Network::new(ip, mask))
+        let (ip_str, mask_str) = subnet.split_once('/').unwrap_or((subnet, ""));
+        let ip = Ipv4Addr::from_str(ip_str).map_err(|_| NetworkError::InvalidIpFormat)?;
+        let mask = if mask_str.is_empty() {
+            Self::default_mask(ip)
         } else {
-            let ip = Ipv4Addr::from_str(subnet).map_err(|_| "Invalid IP format")?;
-            let mask = Self::default_mask(ip);
-            info!(
-                "No prefix provided, using default mask: IP = {}, Mask = {}",
-                ip, mask
-            );
-            Ok(Network::new(ip, mask))
+            mask_str
+                .parse::<u32>()
+                .map_err(|_| NetworkError::InvalidMaskFormat)?
+        };
+        info!("Parsed network: IP = {}, Mask = {}", ip, mask);
+        Ok(Network::new(ip, mask))
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum NetworkError {
+    InvalidIpFormat,
+    InvalidMaskFormat,
+    EmptyNetworkList,
+    InvalidHostsOrSubnets,
+    InsufficientBits,
+}
+
+impl Error for NetworkError {}
+
+impl std::fmt::Display for NetworkError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NetworkError::InvalidIpFormat => write!(f, "Invalid IP address format."),
+            NetworkError::InvalidMaskFormat => write!(f, "Invalid subnet mask format."),
+            NetworkError::EmptyNetworkList => write!(f, "The network list is empty."),
+            NetworkError::InvalidHostsOrSubnets => {
+                write!(f, "Invalid number of hosts or subnets provided.")
+            }
+            NetworkError::InsufficientBits => {
+                write!(
+                    f,
+                    "Insufficient bits available for the required subnets or hosts."
+                )
+            }
         }
     }
 }
@@ -39,9 +67,9 @@ impl Network {
         Self { ip, mask }
     }
 
-    pub fn aggregate_networks(networks: &[Network]) -> Result<Network, &'static str> {
+    pub fn aggregate_networks(networks: &[Network]) -> Result<Network, NetworkError> {
         if networks.is_empty() {
-            return Err("Network list is empty");
+            return Err(NetworkError::EmptyNetworkList);
         }
         if networks.len() == 1 {
             info!("Single network provided: {:?}", networks[0]);
@@ -52,7 +80,7 @@ impl Network {
         let common_bits = Self::count_common_bits(networks);
         info!("Common prefix length: {}", common_bits);
 
-        let new_mask = !0u32 << (32 - common_bits);
+        let new_mask = Self::mask_to_u32(common_bits);
         let aggregated_ip = Ipv4Addr::from(common_prefix & new_mask);
         info!(
             "Aggregated network: IP = {}, Mask = {}",
@@ -87,22 +115,20 @@ impl Network {
         mask: u32,
         required_hosts: u32,
         required_subnets: u32,
-    ) -> Result<Ipv4Addr, String> {
+    ) -> Result<Ipv4Addr, NetworkError> {
         if required_hosts == 0 || required_subnets == 0 {
-            return Err("Number of hosts and subnets must be greater than zero".to_string());
+            return Err(NetworkError::InvalidHostsOrSubnets);
         }
 
         let host_bits = (required_hosts + 2).next_power_of_two().trailing_zeros();
         let subnet_bits = required_subnets.next_power_of_two().trailing_zeros();
 
         if mask < host_bits || subnet_bits > 32 - mask {
-            return Err(
-                "Not enough bits in the network for the required hosts or subnets".to_string(),
-            );
+            return Err(NetworkError::InsufficientBits);
         }
 
         let new_mask_prefix = mask + subnet_bits;
-        let new_mask = !0u32 << (32 - new_mask_prefix);
+        let new_mask = Self::mask_to_u32(new_mask_prefix);
 
         Ok(Ipv4Addr::from(new_mask.to_be_bytes()))
     }

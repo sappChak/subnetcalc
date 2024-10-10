@@ -106,7 +106,7 @@ fn handle_mask(
             );
         }
         Err(e) => {
-            println!("{}: {}", "Error".bold().red(), e.red());
+            println!("{}: {}", "Error".bold().red(), e.to_string().red());
         }
     }
     Ok(())

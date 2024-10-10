@@ -1,6 +1,6 @@
 use std::net::Ipv4Addr;
 use std::str::FromStr;
-use subnetcalc::subnet::Network;
+use subnetcalc::subnet::{Network, NetworkError};
 
 #[test]
 fn test_parse_subnet_valid() {
@@ -15,7 +15,7 @@ fn test_parse_subnet_valid() {
 fn test_parse_subnet_invalid_format() {
     let result = Network::from_str("192.168.100.0-27");
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), "Invalid IP format");
+    assert_eq!(result.unwrap_err(), NetworkError::InvalidIpFormat);
 
     let result = Network::from_str("invalid/27");
     assert!(result.is_err());
@@ -47,7 +47,7 @@ fn test_aggregate_subnets_empty() {
 
     let result = Network::aggregate_networks(&subnets);
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), "Network list is empty");
+    assert_eq!(result.unwrap_err(), NetworkError::EmptyNetworkList);
 }
 
 #[test]
@@ -172,7 +172,21 @@ fn test_hosts() {
     assert_eq!(subnet.available_hosts(), 65_534);
 }
 
-#[test]
-fn test_cal() {
-
-}
+// #[test]
+// fn determine_subnet_mask() {
+//     let result = Network::determine_subnet_mask(24, 10, 1);
+//     assert!(result.is_ok());
+//     assert_eq!(result.unwrap(), Ipv4Addr::new(255, 255, 255, 224));
+//
+//     let result = Network::determine_subnet_mask(24, 10, 0);
+//     assert!(result.is_err());
+//     assert_eq!(result.unwrap_err(), NetworkError::InvalidHostsOrSubnets);
+//
+//     let result = Network::determine_subnet_mask(24, 0, 1);
+//     assert!(result.is_err());
+//     assert_eq!(result.unwrap_err(), NetworkError::InvalidHostsOrSubnets);
+//
+//     let result = Network::determine_subnet_mask(24, 10, 10);
+//     assert!(result.is_err());
+//     assert_eq!(result.unwrap_err(), NetworkError::InvalidHostsOrSubnets);
+// }
