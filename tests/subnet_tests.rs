@@ -1,6 +1,7 @@
 use std::net::Ipv4Addr;
 use std::str::FromStr;
-use subnetcalc::subnet::{Network, NetworkError};
+use subnetcalc::errors::NetworkError;
+use subnetcalc::subnet::Network;
 
 #[test]
 fn test_parse_subnet_valid() {
