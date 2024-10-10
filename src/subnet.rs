@@ -133,6 +133,7 @@ impl Network {
         }
 
         let new_mask_prefix = mask + subnet_bits;
+        info!("New mask prefix: {}", new_mask_prefix);
         let new_mask = Self::mask_to_u32(new_mask_prefix);
 
         Ok(Ipv4Addr::from(new_mask.to_be_bytes()))
