@@ -37,6 +37,34 @@ impl Network {
         Self { ip, mask }
     }
 
+    pub fn broadcast_address(&self) -> Ipv4Addr {
+        let ip_u32 = u32::from(self.ip);
+        let wildcard = !Self::mask_to_u32(self.mask);
+        Ipv4Addr::from(ip_u32 | wildcard)
+    }
+
+    pub fn netmask_address(&self) -> Ipv4Addr {
+        Ipv4Addr::from(Self::mask_to_u32(self.mask))
+    }
+
+    pub fn wildcard_address(&self) -> Ipv4Addr {
+        Ipv4Addr::from(!Self::mask_to_u32(self.mask))
+    }
+
+    pub fn ip_class(&self) -> char {
+        match self.ip.octets()[0] {
+            0..=127 => 'A',
+            128..=191 => 'B',
+            192..=223 => 'C',
+            224..=239 => 'D',
+            240..=255 => 'E',
+        }
+    }
+
+    pub fn available_hosts(&self) -> u32 {
+        2u32.pow(32 - self.mask) - 2
+    }
+
     pub fn aggregate_networks(networks: &[Network]) -> Result<Network, NetworkError> {
         if networks.is_empty() {
             return Err(NetworkError::EmptyNetworkList);
@@ -107,34 +135,6 @@ impl Network {
         let new_mask = Self::mask_to_u32(new_mask_prefix);
 
         Ok(Ipv4Addr::from(new_mask.to_be_bytes()))
-    }
-
-    pub fn broadcast_address(&self) -> Ipv4Addr {
-        let ip_u32 = u32::from(self.ip);
-        let wildcard = !Self::mask_to_u32(self.mask);
-        Ipv4Addr::from(ip_u32 | wildcard)
-    }
-
-    pub fn netmask_address(&self) -> Ipv4Addr {
-        Ipv4Addr::from(Self::mask_to_u32(self.mask))
-    }
-
-    pub fn wildcard_address(&self) -> Ipv4Addr {
-        Ipv4Addr::from(!Self::mask_to_u32(self.mask))
-    }
-
-    pub fn ip_class(&self) -> char {
-        match self.ip.octets()[0] {
-            0..=127 => 'A',
-            128..=191 => 'B',
-            192..=223 => 'C',
-            224..=239 => 'D',
-            240..=255 => 'E',
-        }
-    }
-
-    pub fn available_hosts(&self) -> u32 {
-        2u32.pow(32 - self.mask) - 2
     }
 
     pub fn default_mask(ip: Ipv4Addr) -> u32 {
