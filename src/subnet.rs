@@ -5,12 +5,12 @@ use std::net::Ipv4Addr;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Network {
     pub ip: Ipv4Addr,
-    pub mask: u32, // CIDR notation (e.g., /24)
+    pub prefix: u32, // CIDR notation (e.g., /24)
 }
 
 impl std::fmt::Display for Network {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}/{}", self.ip, self.mask)
+        write!(f, "{}/{}", self.ip, self.prefix)
     }
 }
 
@@ -34,21 +34,21 @@ impl std::str::FromStr for Network {
 
 impl Network {
     pub fn new(ip: Ipv4Addr, mask: u32) -> Self {
-        Self { ip, mask }
+        Self { ip, prefix: mask }
     }
 
     pub fn broadcast_address(&self) -> Ipv4Addr {
         let ip_u32 = u32::from(self.ip);
-        let wildcard = !Self::mask_to_u32(self.mask);
+        let wildcard = !Self::mask_to_u32(self.prefix);
         Ipv4Addr::from(ip_u32 | wildcard)
     }
 
     pub fn netmask_address(&self) -> Ipv4Addr {
-        Ipv4Addr::from(Self::mask_to_u32(self.mask))
+        Ipv4Addr::from(Self::mask_to_u32(self.prefix))
     }
 
     pub fn wildcard_address(&self) -> Ipv4Addr {
-        Ipv4Addr::from(!Self::mask_to_u32(self.mask))
+        Ipv4Addr::from(!Self::mask_to_u32(self.prefix))
     }
 
     pub fn ip_class(&self) -> char {
@@ -62,7 +62,7 @@ impl Network {
     }
 
     pub fn available_hosts(&self) -> u32 {
-        2u32.pow(32 - self.mask) - 2
+        2u32.pow(32 - self.prefix) - 2
     }
 
     pub fn aggregate_networks(networks: &[Network]) -> Result<Network, NetworkError> {
@@ -92,7 +92,7 @@ impl Network {
     fn find_common_prefix(networks: &[Network]) -> u32 {
         networks
             .iter()
-            .map(|net| u32::from(net.ip) & Self::mask_to_u32(net.mask))
+            .map(|net| u32::from(net.ip) & Self::mask_to_u32(net.prefix))
             .fold(u32::MAX, |acc, masked_ip| acc & masked_ip)
     }
 

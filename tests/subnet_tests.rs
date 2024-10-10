@@ -74,14 +74,14 @@ fn test_from_str_with_prefix() {
     let subnet_str = "192.168.1.0/24";
     let subnet = Network::from_str(subnet_str).expect("Failed to parse subnet");
     assert_eq!(subnet.ip, Ipv4Addr::new(192, 168, 1, 0));
-    assert_eq!(subnet.mask, 24);
+    assert_eq!(subnet.prefix, 24);
 }
 
 #[test]
 fn test_from_str_without_prefix() {
     let subnet_str = "192.168.1.10";
     let subnet = Network::from_str(subnet_str).expect("Failed to parse subnet");
-    assert_eq!(subnet.mask, 24);
+    assert_eq!(subnet.prefix, 24);
     assert_eq!(subnet.ip, Ipv4Addr::new(192, 168, 1, 10)); // Defaulted to /24
 }
 
