@@ -84,7 +84,7 @@ impl Network {
     }
 
     pub fn determine_subnet_mask(
-        network: &Network,
+        mask: u32,
         required_hosts: u32,
         required_subnets: u32,
     ) -> Result<Ipv4Addr, String> {
@@ -95,18 +95,18 @@ impl Network {
         let host_bits = (required_hosts + 2).next_power_of_two().trailing_zeros();
         let subnet_bits = required_subnets.next_power_of_two().trailing_zeros();
 
-        if network.mask < host_bits || subnet_bits > 32 - network.mask {
+        if mask < host_bits || subnet_bits > 32 - mask {
             return Err(
                 "Not enough bits in the network for the required hosts or subnets".to_string(),
             );
         }
 
-        let new_mask_prefix = network.mask + subnet_bits;
-        let new_mask: u32 = !0 << (32 - new_mask_prefix);
+        let new_mask_prefix = mask + subnet_bits;
+
+        let new_mask = !0u32 << (32 - new_mask_prefix);
 
         Ok(Ipv4Addr::from(new_mask.to_be_bytes()))
     }
-
     pub fn broadcast_address(&self) -> Ipv4Addr {
         let ip_u32 = u32::from(self.ip);
         let wildcard = !Self::mask_to_u32(self.mask);

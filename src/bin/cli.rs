@@ -97,7 +97,7 @@ fn handle_mask(
     required_networks: u32,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let parsed_network = Network::from_str(network)?;
-    match Network::determine_subnet_mask(&parsed_network, required_hosts, required_networks) {
+    match Network::determine_subnet_mask(parsed_network.mask, required_hosts, required_networks) {
         Ok(mask) => {
             println!(
                 "{}: {}",
