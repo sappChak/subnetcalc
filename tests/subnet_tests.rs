@@ -172,21 +172,9 @@ fn test_hosts() {
     assert_eq!(subnet.available_hosts(), 65_534);
 }
 
-// #[test]
-// fn determine_subnet_mask() {
-//     let result = Network::determine_subnet_mask(24, 10, 1);
-//     assert!(result.is_ok());
-//     assert_eq!(result.unwrap(), Ipv4Addr::new(255, 255, 255, 224));
-//
-//     let result = Network::determine_subnet_mask(24, 10, 0);
-//     assert!(result.is_err());
-//     assert_eq!(result.unwrap_err(), NetworkError::InvalidHostsOrSubnets);
-//
-//     let result = Network::determine_subnet_mask(24, 0, 1);
-//     assert!(result.is_err());
-//     assert_eq!(result.unwrap_err(), NetworkError::InvalidHostsOrSubnets);
-//
-//     let result = Network::determine_subnet_mask(24, 10, 10);
-//     assert!(result.is_err());
-//     assert_eq!(result.unwrap_err(), NetworkError::InvalidHostsOrSubnets);
-// }
+#[test]
+fn determine_subnet_mask() {
+    let result = Network::determine_subnet_mask(16, 320, 90);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Ipv4Addr::new(255, 255, 255, 128));
+}

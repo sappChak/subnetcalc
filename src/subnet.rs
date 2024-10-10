@@ -113,8 +113,8 @@ impl Network {
 
     pub fn determine_subnet_mask(
         mask: u32,
-        required_hosts: u32,
         required_subnets: u32,
+        required_hosts: u32,
     ) -> Result<Ipv4Addr, NetworkError> {
         if required_hosts == 0 || required_subnets == 0 {
             return Err(NetworkError::InvalidHostsOrSubnets);
@@ -122,6 +122,11 @@ impl Network {
 
         let host_bits = (required_hosts + 2).next_power_of_two().trailing_zeros();
         let subnet_bits = required_subnets.next_power_of_two().trailing_zeros();
+
+        info!(
+            "Required hosts: {}, Required subnets: {}, Host bits: {}, Subnet bits: {}",
+            required_hosts, required_subnets, host_bits, subnet_bits,
+        );
 
         if mask < host_bits || subnet_bits > 32 - mask {
             return Err(NetworkError::InsufficientBits);
