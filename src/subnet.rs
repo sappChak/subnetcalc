@@ -52,7 +52,7 @@ impl Network {
         let common_bits = Self::count_common_bits(networks);
         info!("Common prefix length: {}", common_bits);
 
-        let new_mask = !0 << (32 - common_bits);
+        let new_mask = !0u32 << (32 - common_bits);
         let aggregated_ip = Ipv4Addr::from(common_prefix & new_mask);
         info!(
             "Aggregated network: IP = {}, Mask = {}",
@@ -102,11 +102,11 @@ impl Network {
         }
 
         let new_mask_prefix = mask + subnet_bits;
-
         let new_mask = !0u32 << (32 - new_mask_prefix);
 
         Ok(Ipv4Addr::from(new_mask.to_be_bytes()))
     }
+
     pub fn broadcast_address(&self) -> Ipv4Addr {
         let ip_u32 = u32::from(self.ip);
         let wildcard = !Self::mask_to_u32(self.mask);
