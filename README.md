@@ -1,6 +1,6 @@
 # Subnet Analyzer
 
-This Rust application calculates various subnet-related information, similar to the functionality provided by `ipcalc`. It can aggregate a list of subnets into a common network address and prefix length, and will include additional features for subnet calculations.
+This Rust application calculates various subnet-related information, similar to the functionality provided by `ipcalc`. It can aggregate a list of subnets into a common network address and prefix length, determine subnet information (e.g., broadcast address, wildcard mask), and calculate a new subnet mask based on the required number of subnets and hosts.
 
 ## Usage
 
@@ -21,12 +21,11 @@ cargo run --release info "192.168.100.0/27"
 To determine a new subnet mask based on NetID and the required number of subnets and hosts:
 
 ```sh
-# Command structure:
-# cargo run --release mask <NetID> <required_subnets> <required_hosts>
-cargo run --release mask 172.27.0.0/16 250 140
+cargo run --release mask <NetID> <required_subnets: u32> <required_hosts: u32>
 ```
 
 Note: If a prefix is not provided, the default based on the IP class will be applied.
+
 ## Tests
 
 The application includes unit tests to verify the functionality of subnet parsing, aggregation, and utility functions. To run the tests, use the following command:
