@@ -21,10 +21,12 @@ cargo run --release info "192.168.100.0/27"
 To determine a new subnet mask based on NetID and the required number of subnets and hosts:
 
 ```sh
-cargo run --release mask <NetID> <required_subnets: u32> <required_hosts: u32>
+cargo run --release mask "198.31.0.0" "90" "350"
 ```
 
-Note: If a prefix is not provided, the default based on the IP class will be applied.
+> Notes: 
+ - If a prefix is not provided, the default based on the IP class will be applied. 
+ - Quotation marks are unnecessary.
 
 ## Tests
 
