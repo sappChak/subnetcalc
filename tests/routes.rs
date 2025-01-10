@@ -2,10 +2,8 @@ use std::net::Ipv4Addr;
 use std::str::FromStr;
 use subnetcalc::{
     errors::RouteError,
-    subnet::{
-        aggregate_routes, count_common_bits, default_mask, determine_subnet_mask, mask_to_u32,
-        Route,
-    },
+    routes::{aggregate_routes, count_common_bits, determine_subnet_mask, Route},
+    utils::{default_mask, mask_to_u32},
 };
 
 #[test]
