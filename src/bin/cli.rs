@@ -12,23 +12,23 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Aggregate multiple networks into one larger network
+    /// Aggregate multiple routes into one larger route
     Aggregate {
-        /// List of networks to aggregate (in CIDR notation)
+        /// List of routes to aggregate (in CIDR notation)
         #[arg(required = true)]
-        networks: Vec<String>,
+        routes: Vec<String>,
     },
-    /// Display information about a specific network
+    /// Display information about a specific route
     Info {
         /// Network to display information for (in CIDR notation)
         #[arg(required = true)]
-        network: String,
+        route: String,
     },
     /// Calculate the mask for a given number of hosts and networks
     Mask {
-        // Network to calculate the mask for
+        // Route to calculate the mask for
         #[arg(required = true)]
-        network: String,
+        route: String,
         /// Number of required networks
         #[arg(required = true)]
         subnets_number: u32,
@@ -44,24 +44,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse_from(args);
 
     match &cli.command {
-        Commands::Aggregate { networks } => handle_aggregate(networks),
-        Commands::Info { network } => handle_info(network),
+        Commands::Aggregate { routes: networks } => handle_aggregate(networks),
+        Commands::Info { route: network } => handle_info(network),
         Commands::Mask {
-            network,
+            route: network,
             hosts,
             subnets_number: networks,
         } => handle_mask(network, *hosts, *networks),
     }
 }
 
-fn handle_aggregate(networks: &[String]) -> Result<(), Box<dyn std::error::Error>> {
-    let parsed_networks: Vec<Route> = parse_networks(networks)?;
-    match aggregate_routes(&parsed_networks) {
-        Ok(aggregated_network) => {
+fn handle_aggregate(routes: &[String]) -> Result<(), Box<dyn std::error::Error>> {
+    let parsed_routes: Vec<Route> = parse_routes(routes)?;
+    match aggregate_routes(&parsed_routes) {
+        Ok(aggregated) => {
             println!(
                 "{}: {}",
-                "Aggregated Network".bold().green(),
-                aggregated_network.to_string().purple()
+                "Aggregated Route".bold().green(),
+                aggregated.to_string().purple()
             );
         }
         Err(e) => {
@@ -71,9 +71,9 @@ fn handle_aggregate(networks: &[String]) -> Result<(), Box<dyn std::error::Error
     Ok(())
 }
 
-fn handle_info(network_str: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let network = Route::from_str(network_str)?;
-    display_network_info(&network);
+fn handle_info(route: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let route = Route::from_str(route)?;
+    display_network_info(&route);
     Ok(())
 }
 
@@ -98,42 +98,38 @@ fn handle_mask(
     Ok(())
 }
 
-fn parse_networks(networks: &[String]) -> Result<Vec<Route>, Box<dyn std::error::Error>> {
-    networks
+fn parse_routes(routes: &[String]) -> Result<Vec<Route>, Box<dyn std::error::Error>> {
+    routes
         .iter()
         .map(|s| Route::from_str(s).map_err(|e| e.into()))
         .collect::<Result<Vec<_>, _>>()
 }
 
-fn display_network_info(network: &Route) {
-    println!(
-        "{}: {}",
-        "Network".bold().green(),
-        network.to_string().purple()
-    );
+fn display_network_info(route: &Route) {
+    println!("{}: {}", "Route".bold().green(), route.to_string().purple());
     println!(
         "{}: {}",
         "Netmask".bold().green(),
-        network.netmask_address().to_string().yellow()
+        route.netmask_address().to_string().yellow()
     );
     println!(
         "{}: {}",
         "Wildcard".bold().green(),
-        network.wildcard_address().to_string().yellow()
+        route.wildcard_address().to_string().yellow()
     );
     println!(
         "{}: {}",
         "Broadcast".bold().green(),
-        network.broadcast_address().to_string().yellow()
+        route.broadcast_address().to_string().yellow()
     );
     println!(
         "{}: {}",
         "Available Hosts".bold().green(),
-        network.available_hosts().to_string().yellow()
+        route.available_hosts().to_string().yellow()
     );
     println!(
         "{}: {}",
         "Class".bold().green(),
-        network.ip_class().to_string().cyan()
+        route.ip_class().to_string().cyan()
     );
 }
