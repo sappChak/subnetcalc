@@ -1,6 +1,9 @@
-use crate::utils::default_mask;
-use crate::{errors::RouteError, utils::mask_to_u32};
 use std::net::Ipv4Addr;
+
+use crate::{
+    errors::RouteError,
+    utils::{default_mask, subnet_mask},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Route {
@@ -32,22 +35,22 @@ impl std::str::FromStr for Route {
 }
 
 impl Route {
-    pub fn new(ip: Ipv4Addr, mask: u32) -> Self {
-        Self { ip, prefix: mask }
+    pub fn new(ip: Ipv4Addr, prefix: u32) -> Self {
+        Self { ip, prefix }
     }
 
     pub fn broadcast_address(&self) -> Ipv4Addr {
         let ip_u32 = u32::from(self.ip);
-        let wildcard = !mask_to_u32(self.prefix);
+        let wildcard = !subnet_mask(self.prefix);
         Ipv4Addr::from(ip_u32 | wildcard)
     }
 
     pub fn netmask_address(&self) -> Ipv4Addr {
-        Ipv4Addr::from(mask_to_u32(self.prefix))
+        Ipv4Addr::from(subnet_mask(self.prefix))
     }
 
     pub fn wildcard_address(&self) -> Ipv4Addr {
-        Ipv4Addr::from(!mask_to_u32(self.prefix))
+        Ipv4Addr::from(!subnet_mask(self.prefix))
     }
 
     pub fn ip_class(&self) -> char {
@@ -70,43 +73,30 @@ pub fn aggregate_routes(routes: &[Route]) -> Result<Route, RouteError> {
         return Err(RouteError::EmptyNetworkList);
     }
     if routes.len() == 1 {
-        // Single network was provided, see ya next time :(
         return Ok(routes[0]);
     }
-
-    let common_prefix = find_common_prefix(routes);
-    let common_bits = count_common_bits(routes);
-    let new_mask = mask_to_u32(common_bits);
-    let aggregated_ip = Ipv4Addr::from(common_prefix & new_mask);
-
-    Ok(Route::new(aggregated_ip, common_bits))
+    let (bits, count) = common_bits(routes);
+    Ok(Route::new(Ipv4Addr::from(bits), count))
 }
 
-fn find_common_prefix(routes: &[Route]) -> u32 {
-    routes
-        .iter()
-        .map(|route| u32::from(route.ip) & mask_to_u32(route.prefix))
-        // transform all routes into a single one
-        .fold(u32::MAX, |acc, masked_ip| acc & masked_ip)
-}
+pub fn common_bits(routes: &[Route]) -> (u32, u32) {
+    let mut common = u32::MAX;
+    for route in routes {
+        common &= u32::from(route.ip);
+    }
 
-pub fn count_common_bits(routes: &[Route]) -> u32 {
-    let first_ip = u32::from(routes[0].ip);
-
-    let max_prefix_lenght = routes.iter().map(|route| route.prefix).max().unwrap();
-
+    let max_prefix = routes.iter().map(|route| route.prefix).max().unwrap();
     let common_bit_count = (0..32)
         .rev()
         .take_while(|i| {
             let mask: u32 = 1 << i;
             routes
                 .iter()
-                .all(|route| (first_ip & mask) == (u32::from(route.ip) & mask))
+                .all(|route| (common & mask) == (u32::from(route.ip) & mask))
         })
         .count() as u32;
 
-    // In case provided prefix was already taken with a margin
-    common_bit_count.min(max_prefix_lenght)
+    (common, common_bit_count.min(max_prefix))
 }
 
 pub fn determine_subnet_mask(
@@ -126,7 +116,7 @@ pub fn determine_subnet_mask(
     }
 
     let new_mask_prefix = mask + subnet_bits;
-    let new_mask = mask_to_u32(new_mask_prefix);
+    let new_mask = subnet_mask(new_mask_prefix);
 
     Ok(Ipv4Addr::from(new_mask.to_be_bytes()))
 }

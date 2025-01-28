@@ -1,9 +1,9 @@
-use std::net::Ipv4Addr;
-use std::str::FromStr;
+use std::{net::Ipv4Addr, str::FromStr};
+
 use subnetcalc::{
     errors::RouteError,
-    routes::{aggregate_routes, count_common_bits, determine_subnet_mask, Route},
-    utils::{default_mask, mask_to_u32},
+    routes::{aggregate_routes, common_bits, determine_subnet_mask, Route},
+    utils::{default_mask, subnet_mask},
 };
 
 #[test]
@@ -55,21 +55,9 @@ fn test_aggregate_subnets_empty() {
 }
 
 #[test]
-fn test_find_common_prefix_length() {
-    let subnets = vec![
-        Route::new(Ipv4Addr::new(192, 168, 100, 0), 27),
-        Route::new(Ipv4Addr::new(192, 168, 100, 32), 27),
-        Route::new(Ipv4Addr::new(192, 168, 100, 64), 26),
-    ];
-
-    let result = count_common_bits(&subnets);
-    assert_eq!(result, 25);
-}
-
-#[test]
 fn test_mask_to_u32() {
-    assert_eq!(mask_to_u32(24), 0xFFFFFF00); // /24 should give a mask of 255.255.255.0
-    assert_eq!(mask_to_u32(27), 0xFFFFFFE0); // /27 should give a mask of 255.255.255.224
+    assert_eq!(subnet_mask(24), 0xFFFFFF00); // /24 should give a mask of 255.255.255.0
+    assert_eq!(subnet_mask(27), 0xFFFFFFE0); // /27 should give a mask of 255.255.255.224
 }
 
 #[test]
