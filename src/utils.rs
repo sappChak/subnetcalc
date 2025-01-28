@@ -1,7 +1,17 @@
 use std::net::Ipv4Addr;
 
-pub fn mask_to_u32(mask: u32) -> u32 {
-    !0 << (32 - mask)
+pub fn subnet_mask(bits: u32) -> u32 {
+    !0 << (32 - bits)
+}
+
+pub fn u32_to_dotted_decimal(ip: u32) -> String {
+    format!(
+        "{}.{}.{}.{}",
+        (ip >> 24) & 0xFF,
+        (ip >> 16) & 0xFF,
+        (ip >> 8) & 0xFF,
+        ip & 0xFF
+    )
 }
 
 pub fn default_mask(ip: Ipv4Addr) -> u32 {
